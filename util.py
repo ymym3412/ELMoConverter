@@ -100,7 +100,7 @@ def create_hightway_weight(hdf5_file, hightway_layers):
 
 def create_projection_weight(hdf5_file, projection, word_dim):
     # In ELMoForManyLangs, embedding is created by concat of word emb and char emb.
-    # So transger only char emb projection.
+    # So transfer only char emb projection.
     weight = projection.state_dict()['weight'].cpu().numpy()[:, word_dim:]
     bias = projection.state_dict()['bias'].cpu().numpy()
     hdf5_file.create_dataset('CNN_proj/W_proj', data=np.transpose(weight))
