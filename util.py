@@ -56,8 +56,13 @@ def create_lstm_weight(hdf5_file, encoder):
             )
 
 
-def create_char_embed_weight(hdf5_file, embedding_layer):
-    hdf5_file.create_dataset('char_embed', data=embedding_layer.state_dict()['embedding.weight'].cpu().numpy())
+def create_char_embed_weight(hdf5_file, embedding_layer, char_dic):
+    emb = embedding_layer.state_dict()['embedding.weight'].cpu().numpy()
+    # AllenNLP makes padding token id zero
+    # Swap top and padding vector
+    pad_token_id = char_dic['<pad>']
+    emb[0], emb[pad_token_id] = emb[pad_token_id], emb[0]
+    hdf5_file.create_dataset('char_embed', data=emb)
 
 
 def create_CNN_weight(hdf5_file, convolutions):
@@ -107,10 +112,10 @@ def create_projection_weight(hdf5_file, projection, word_dim):
     hdf5_file.create_dataset('CNN_proj/b_proj', data=bias)
 
 
-def create_elmo_h5_from_embedder(embedder, h5_path, config):
+def create_elmo_h5_from_embedder(embedder, h5_path, config, char_dic):
     with h5py.File(h5_path, 'w') as f:
         create_lstm_weight(f, embedder.model.encoder)
-        create_char_embed_weight(f, embedder.model.token_embedder.char_emb_layer)
+        create_char_embed_weight(f, embedder.model.token_embedder.char_emb_layer, char_dic)
         create_CNN_weight(f, embedder.model.token_embedder.convolutions)
         create_hightway_weight(f, embedder.model.token_embedder.highways._layers)
         create_projection_weight(f, embedder.model.token_embedder.projection, word_dim=config['token_embedder']['word_dim'])
